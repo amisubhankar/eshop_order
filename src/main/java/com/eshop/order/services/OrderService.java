@@ -104,4 +104,11 @@ public class OrderService {
 
         return orderedProductList;
     }
+
+    public OrderResponseDto getOrderDetailsById(Long id) {
+        //skipping orderId validation
+        Optional<Order> optionalOrder = orderRepository.findById(id);
+
+        return mapOrderToOrderResponseDto(optionalOrder.get());
+    }
 }
