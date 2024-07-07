@@ -111,4 +111,26 @@ public class OrderService {
 
         return mapOrderToOrderResponseDto(optionalOrder.get());
     }
+
+    public OrderResponseDto updateOrderStatusById(Long id, OrderStatus status) {
+        Optional<Order> optionalOrder = orderRepository.findById(id);
+        //skipping orderId validation
+        Order order = optionalOrder.get();
+        order.setOrderStatus(status);
+
+        Order updatedOrder = orderRepository.save(order);
+
+        return mapOrderToOrderResponseDto(updatedOrder);
+    }
+
+    public String updatePaymentIdByOrderId(Long id, UUID paymentId) {
+        Optional<Order> optionalOrder = orderRepository.findById(id);
+        //skipping orderId validation
+        Order order = optionalOrder.get();
+        order.setPaymentId(paymentId);
+
+        orderRepository.save(order);
+
+        return "Payment id updated successfully";
+    }
 }

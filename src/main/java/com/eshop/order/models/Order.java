@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Entity(name = "eshop_order")
 @Getter
@@ -19,7 +20,7 @@ public class Order {
     @Enumerated(EnumType.ORDINAL)
     private OrderStatus orderStatus;
     private Date bookedAt;
-    private Long paymentId;
+    private UUID paymentId;
     private Long user_id;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
