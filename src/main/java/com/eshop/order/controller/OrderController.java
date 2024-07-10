@@ -18,10 +18,11 @@ public class OrderController {
     OrderService orderService;
 
     @PostMapping("/create")
-    public ResponseEntity<OrderResponseDto> createOrder(@RequestBody OrderRequestDto orderRequestDto)
+    public ResponseEntity<OrderResponseDto> createOrder(@RequestBody OrderRequestDto orderRequestDto,
+                                                        @RequestHeader(value = "Authorization") String header)
             throws ProductOutOfStockException {
 
-        return ResponseEntity.ok().body(orderService.createOrder(orderRequestDto));
+        return ResponseEntity.ok().body(orderService.createOrder(orderRequestDto, header));
 
     }
 

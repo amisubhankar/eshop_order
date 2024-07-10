@@ -1,14 +1,14 @@
 package com.eshop.order.services;
 
-import com.eshop.order.dto.CartResponseDto;
-import com.eshop.order.dto.OrderRequestDto;
-import com.eshop.order.dto.OrderResponseDto;
-import com.eshop.order.dto.ProductResponseDto;
+import com.eshop.order.dto.*;
 import com.eshop.order.exceptions.ProductOutOfStockException;
 import com.eshop.order.models.Order;
 import com.eshop.order.models.OrderStatus;
 import com.eshop.order.models.OrderedProduct;
 import com.eshop.order.repositories.OrderRepository;
+import com.eshop.order.util.OrderUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -26,9 +26,13 @@ public class OrderService {
     RestTemplate restTemplate;
     @Autowired
     OrderRepository orderRepository;
+
+    @Autowired
+    ObjectMapper objectMapper;
+
     float totalCartAmount = 0;
 
-    public OrderResponseDto createOrder(OrderRequestDto orderRequestDto) throws ProductOutOfStockException {
+    public OrderResponseDto createOrder(OrderRequestDto orderRequestDto, String header) throws ProductOutOfStockException {
         List<OrderedProduct> orderedProductList = createListForOrderedProducts(orderRequestDto);
 
         //3. Create Order
@@ -36,7 +40,7 @@ public class OrderService {
         order.setAmount(totalCartAmount);
         order.setOrderedProducts(orderedProductList);
         order.setBookedAt(new Date());
-        order.setUser_id(orderRequestDto.getUser_id());
+        order.setUser_id(OrderUtil.getUserIdFromToken(header));
         order.setOrderStatus(OrderStatus.ORDER_INITIATED);
 
         //setting order obj to ordered products
@@ -48,7 +52,28 @@ public class OrderService {
         //4. Save in the repository
         Order createdOrder = orderRepository.save(order);
 
-        //5. Pending --> Delete Cart details
+        //5. Delete Cart details
+        //make the object
+        CartDeleteRequestDto obj = new CartDeleteRequestDto();
+        obj.setCartIds(orderRequestDto.getCartIds());
+        String cartIdsToDelete;
+
+        try {
+            cartIdsToDelete = objectMapper.writeValueAsString(obj);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        // send it!
+        restTemplate.exchange("http://cart/cart/delete/afterorder?cartIds={cartIds}",
+                                HttpMethod.DELETE,
+                                requestEntity,
+                                String.class,
+                                cartIdsToDelete);
+
 
         return mapOrderToOrderResponseDto(createdOrder);
     }
